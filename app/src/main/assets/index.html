@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <title>Demo Chat</title>
+
+    <link href="bootstrap.css" rel="stylesheet">
+
+    <style>
+        body {
+            padding: 20px;
+        }
+
+        #console {
+            height: 400px;
+            overflow: auto;
+        }
+
+        .username-msg {
+            color: orange;
+        }
+
+        .connect-msg {
+            color: green;
+        }
+
+        .disconnect-msg {
+            color: red;
+        }
+
+        .send-msg {
+            color: #888
+        }
+    </style>
+
+
+    <script src="moment.min.js"></script>
+    <script src="jquery-1.7.2.min.js"></script>
+
+    <script>
+
+        var userName = 'user' + Math.floor((Math.random() * 1000) + 1);
+        var ip = NativeBridge.getIPV4();
+        var port = NativeBridge.getPort();
+
+        alert(ip + ":" + port);
+
+        var ws = new WebSocket("ws://" + ip + ":" + port);
+        // var ws = new WebSocket("ws://169.254.248.124:8887");
+        ws.onopen = function () {
+            var rs = ws.readyState;
+            switch(rs) {
+                case WebSocket.CONNECTING: {
+                    output("正在连接！" + rs);
+                    break;
+                }
+                case WebSocket.OPEN: {
+                    output("连接成功！" + rs);
+                    break;
+                }
+                default: {
+                    output("连接失败！" + rs);
+                    break;
+                }  
+            }
+        };
+
+        ws.onmessage = function (evt) {
+            var received_msg = evt.data;
+            output(received_msg);
+        };
+        ws.onclose = function () {
+            var rs = ws.readyState;
+            switch(rs) {
+                case WebSocket.CLOSING: {
+                    output("正在关闭！" + rs);
+                    break;
+                }
+                case WebSocket.CLOSED: {
+                    output("关闭成功！" + rs);
+                    break;
+                }
+                default: {
+                    output("关闭失败！" + rs);
+                    break;
+                }  
+            }
+        };
+
+        function sendDisconnect() {
+            // NativeBridge.stopWebServer();
+            ws.onclose();
+        }
+
+        function sendConnect() {
+            // NativeBridge.startWebServer();
+            ws.onopen();
+        }   
+
+        function sendMessage() {
+            var message = $('#msg').val();
+            $('#msg').val('');
+            ws.send(message);
+        }
+
+        function output(message) {
+            var currentTime = "<span class='time'>" + moment().format('HH:mm:ss.SSS') + "</span>";
+            var element = $("<div>" + currentTime + " " + message + "</div>");
+            $('#console').prepend(element);
+        }
+
+        $(document).keydown(function (e) {
+            if (e.keyCode == 13) {
+                $('#send').click();
+            }
+        });
+
+    </script>
+</head>
+
+<body>
+
+    <h1>Java-Socket Chat</h1>
+
+    <br />
+
+    <div id="console" class="well">
+    </div>
+
+    <form class="well form-inline" onsubmit="return false;">
+        <input id="msg" class="input-xlarge" type="text" placeholder="Type something..." />
+        <button type="button" onClick="sendMessage()" class="btn" id="send">Send</button>
+        <button type="button" onClick="sendConnect()" class="btn">Connect</button>
+        <button type="button" onClick="sendDisconnect()" class="btn">Disconnect</button>
+    </form>
+</body>
+
+</html>
